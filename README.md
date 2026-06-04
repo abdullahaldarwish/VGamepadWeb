@@ -34,7 +34,7 @@ The core server library — the part that actually does the work.
 
 Built on **.NET 10** with **ASP.NET Core**. It runs an HTTP server, handles WebSocket and WebRTC signaling, manages connected players, and translates their inputs into virtual gamepad events.
 
-For virtual gamepad emulation, it uses the **ViGEmBus** driver via the [Nefarius.ViGEm.Client](https://github.com/nefarius/ViGEm.Client) library. This makes the virtual controller appear to Windows as a real Xbox 360 controller.
+For virtual gamepad emulation, it uses the **ViGEmBus** driver via the [Nefarius.ViGEm.Client](https://github.com/nefarius/ViGEmClient) library. This makes the virtual controller appear to Windows as a real Xbox 360 controller.
 
 For WebRTC, it uses [SIPSorcery](https://github.com/sipsorcery-org/sipsorcery), a pure .NET WebRTC and SIP library that handles the peer connection, ICE negotiation, and data channels.
 
