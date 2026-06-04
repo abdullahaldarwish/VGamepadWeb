@@ -1,6 +1,7 @@
 import React from 'react';
 import type { GamepadLayout, ThemeType } from './types';
 import { STICK_IDS, THEMES } from './constants';
+import { useLanguage } from './LanguageContext';
 
 interface EditBarProps {
   editMode: boolean;
@@ -18,6 +19,8 @@ interface EditBarProps {
 export const EditBar: React.FC<EditBarProps> = ({
   editMode, selectedControl, layout, theme, updateSize, setSize, setShape, nudgePos, resetControl, setSelectedControl
 }) => {
+  const { t } = useLanguage();
+
   if (!editMode) return null;
 
   const getSelectedSize = () => {
@@ -43,16 +46,16 @@ export const EditBar: React.FC<EditBarProps> = ({
               {(STICK_IDS as readonly string[]).includes(selectedControl) ? '🕹️' : '🔘'}
             </span>
             <span className="gp-edit-title">
-              {selectedControl === 'LeftStick' ? 'عصا التحكم اليسرى (LS)' : 
-               selectedControl === 'RightStick' ? 'عصا التحكم اليمنى (RS)' : 
-               `زر ${selectedControl}`}
+              {selectedControl === 'LeftStick' ? t.leftStickFull : 
+               selectedControl === 'RightStick' ? t.rightStickFull : 
+               `${t.buttonPrefix} ${selectedControl}`}
             </span>
           </div>
 
           <div className="gp-edit-body">
             {/* Size Control Row */}
             <div className="gp-edit-section">
-              <span className="gp-edit-label">الحجم</span>
+              <span className="gp-edit-label">{t.size}</span>
               <div className="gp-edit-slider-wrap">
                 <button className="gp-edit-btn-val" onClick={() => updateSize(selectedControl, -4)}>−</button>
                 <input 
@@ -71,19 +74,19 @@ export const EditBar: React.FC<EditBarProps> = ({
             {/* Shape Control Row (Only for buttons) */}
             {THEMES[theme][selectedControl] && (
               <div className="gp-edit-section">
-                <span className="gp-edit-label">الشكل</span>
+                <span className="gp-edit-label">{t.shape}</span>
                 <div className="gp-edit-segmented">
                   <button 
                     className={`gp-edit-seg-btn ${getSelectedRound() ? 'active' : ''}`}
                     onClick={() => setShape(selectedControl, true)}
                   >
-                    ● دائري
+                    {t.circular}
                   </button>
                   <button 
                     className={`gp-edit-seg-btn ${!getSelectedRound() ? 'active' : ''}`}
                     onClick={() => setShape(selectedControl, false)}
                   >
-                    ■ مستطيل
+                    {t.rectangle}
                   </button>
                 </div>
               </div>
@@ -91,12 +94,12 @@ export const EditBar: React.FC<EditBarProps> = ({
 
             {/* Fine Nudge Control Row */}
             <div className="gp-edit-section">
-              <span className="gp-edit-label">الموقع</span>
+              <span className="gp-edit-label">{t.position}</span>
               <div className="gp-edit-nudge">
                 <button className="gp-nudge-btn up" onClick={() => nudgePos(selectedControl, 0, -1)}>▲</button>
                 <div className="gp-nudge-mid">
                   <button className="gp-nudge-btn left" onClick={() => nudgePos(selectedControl, -1, 0)}>◀</button>
-                  <span className="gp-nudge-title">محاذاة</span>
+                  <span className="gp-nudge-title">{t.align}</span>
                   <button className="gp-nudge-btn right" onClick={() => nudgePos(selectedControl, 1, 0)}>▶</button>
                 </div>
                 <button className="gp-nudge-btn down" onClick={() => nudgePos(selectedControl, 0, 1)}>▼</button>
@@ -106,17 +109,17 @@ export const EditBar: React.FC<EditBarProps> = ({
 
           <div className="gp-edit-actions">
             <button className="gp-edit-action reset" onClick={() => resetControl(selectedControl)}>
-              🔄 إعادة تعيين الزر
+              {t.resetButton}
             </button>
             <button className="gp-edit-action close" onClick={() => setSelectedControl(null)}>
-              ✕ إغلاق
+              {t.closePanel}
             </button>
           </div>
         </div>
       ) : (
         <div className="gp-edit-hint">
           <span className="gp-edit-hint-pulse"></span>
-          <span className="gp-edit-hint-text">اختر أي زر بالضغط عليه لتغيير حجمه وشكله ومكانه بدقة</span>
+          <span className="gp-edit-hint-text">{t.editHint}</span>
         </div>
       )}
     </div>

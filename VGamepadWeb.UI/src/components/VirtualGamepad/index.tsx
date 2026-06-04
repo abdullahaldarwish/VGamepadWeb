@@ -8,15 +8,17 @@ import { TopBar } from './TopBar';
 import { SettingsModal } from './SettingsModal';
 import { EditBar } from './EditBar';
 import { useGamepadConnection } from './hooks/useGamepadConnection';
+import { LanguageProvider, useLanguage } from './LanguageContext';
 
-export const VirtualGamepad: React.FC = () => {
+const VirtualGamepadInner: React.FC = () => {
+  const { t } = useLanguage();
   const [activeProfile, setActiveProfile] = useState<string>(() => localStorage.getItem('gamepad_active_profile') || 'default');
   const [profiles, setProfiles] = useState<{id: string, name: string}[]>(() => {
     try { 
       const p = localStorage.getItem('gamepad_profiles');
       if (p) return JSON.parse(p);
     } catch {}
-    return [{ id: 'default', name: 'الافتراضي' }];
+    return [{ id: 'default', name: 'Default' }];
   });
 
   const [theme, setTheme] = useState<ThemeType>(() => (localStorage.getItem('gamepad_theme') as ThemeType) || 'xbox');
@@ -103,7 +105,7 @@ export const VirtualGamepad: React.FC = () => {
   }, [theme]);
 
   const createNewProfile = () => {
-    const name = prompt('أدخل اسم البروفايل الجديد:');
+    const name = prompt(t.newProfilePrompt);
     if (name && name.trim()) {
       const newId = 'p_' + Date.now();
       setProfiles(prev => [...prev, { id: newId, name: name.trim() }]);
@@ -113,8 +115,8 @@ export const VirtualGamepad: React.FC = () => {
   };
 
   const deleteProfile = (profileId: string) => {
-    if (profiles.length <= 1) return alert('لا يمكن حذف البروفايل الوحيد');
-    if (window.confirm('هل أنت متأكد من حذف هذا البروفايل؟')) {
+    if (profiles.length <= 1) return alert(t.cannotDeleteOnly);
+    if (window.confirm(t.confirmDeleteProfile)) {
       const newProfiles = profiles.filter(p => p.id !== profileId);
       setProfiles(newProfiles);
       if (activeProfile === profileId) {
@@ -211,8 +213,8 @@ export const VirtualGamepad: React.FC = () => {
     reader.onload = () => {
       try {
         const p = JSON.parse(reader.result as string);
-        if (p.controls) { setLayout(p); } else { alert('ملف غير صالح'); }
-      } catch { alert('فشل قراءة الملف'); }
+        if (p.controls) { setLayout(p); } else { alert(t.invalidFile); }
+      } catch { alert(t.readFileFailed); }
     };
     reader.readAsText(file);
     e.target.value = '';
@@ -303,3 +305,9 @@ export const VirtualGamepad: React.FC = () => {
     </div>
   );
 };
+
+export const VirtualGamepad: React.FC = () => (
+  <LanguageProvider>
+    <VirtualGamepadInner />
+  </LanguageProvider>
+);

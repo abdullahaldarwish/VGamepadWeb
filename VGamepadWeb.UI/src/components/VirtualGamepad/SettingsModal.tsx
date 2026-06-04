@@ -1,5 +1,6 @@
 import React from 'react';
 import type { ThemeType, Profile } from './types';
+import { useLanguage } from './LanguageContext';
 
 interface SettingsModalProps {
   settingsOpen: boolean;
@@ -33,14 +34,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   theme, setTheme, controllerType, setControllerType, enableVib, setEnableVib, sensitivity, setSensitivity,
   useSameServer, setUseSameServer, serverUrl, setServerUrl, serverPassword, setServerPassword, connStatus, connect, disconnect
 }) => {
+  const { t } = useLanguage();
+
   if (!settingsOpen) return null;
 
   return (
     <div className="gp-overlay" onClick={() => setSettingsOpen(false)}>
       <div className="gp-modal" onClick={e => e.stopPropagation()}>
-        <h3>الإعدادات</h3>
+        <h3>{t.settings}</h3>
         
-        <label>البروفايل (تخصيص الأزرار)</label>
+        <label>{t.profile}</label>
         <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
           <select 
             className="gp-input" 
@@ -54,19 +57,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <button className="gp-mbtn red" style={{ padding: '0 12px', flex: 'none' }} onClick={() => deleteProfile(activeProfile)} disabled={profiles.length <= 1}>-</button>
         </div>
 
-        <label>شكل الأزرار (التصميم)</label>
+        <label>{t.buttonStyle}</label>
         <select 
           className="gp-input" 
           value={theme}
           onChange={e => setTheme(e.target.value as ThemeType)}
           style={{ marginBottom: '16px' }}
         >
-          <option value="xbox">Xbox (الافتراضي)</option>
+          <option value="xbox">{t.xboxDefault}</option>
           <option value="ps">PlayStation</option>
           <option value="nintendo">Nintendo Switch</option>
         </select>
 
-        <label>نوع اليد (التي تظهر في النظام)</label>
+        <label>{t.controllerTypeLabel}</label>
         <select 
           className="gp-input" 
           value={controllerType}
@@ -85,10 +88,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             onChange={e => setEnableVib(e.target.checked)}
             style={{ width: '20px', height: '20px' }}
           />
-          تفعيل الاهتزاز
+          {t.enableVibration}
         </label>
 
-        <label>حساسية الأزرار/العصا ({sensitivity}%)</label>
+        <label>{t.sensitivity} ({sensitivity}%)</label>
         <input 
           type="range" 
           className="gp-input" 
@@ -105,12 +108,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             onChange={e => setUseSameServer && setUseSameServer(e.target.checked)}
             style={{ width: '20px', height: '20px' }}
           />
-          استخدام الخادم من نفس رابط الموقع
+          {t.useSameServer}
         </label>
 
         {!useSameServer && (
           <>
-            <label>عنوان السيرفر المخصص</label>
+            <label>{t.customServer}</label>
             <input
               className="gp-input"
               value={serverUrl}
@@ -123,26 +126,26 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
         {setServerPassword !== undefined && (
           <>
-            <label>كلمة المرور (اختياري)</label>
+            <label>{t.password}</label>
             <input
               type="password"
               className="gp-input"
               value={serverPassword}
               onChange={e => setServerPassword(e.target.value)}
-              placeholder="اتركها فارغة إذا لم يكن هناك باسورد"
+              placeholder={t.passwordPlaceholder}
               style={{ marginBottom: '16px' }}
             />
           </>
         )}
         <div className="gp-modal-btns">
           {connStatus === 'on' ? (
-            <button className="gp-mbtn red" onClick={disconnect}>قطع الاتصال</button>
+            <button className="gp-mbtn red" onClick={disconnect}>{t.disconnect}</button>
           ) : (
             <button className="gp-mbtn green" onClick={connect} disabled={connStatus === 'ing'}>
-              {connStatus === 'ing' ? '...' : 'اتصال'}
+              {connStatus === 'ing' ? '...' : t.connect}
             </button>
           )}
-          <button className="gp-mbtn" onClick={() => setSettingsOpen(false)}>إغلاق</button>
+          <button className="gp-mbtn" onClick={() => setSettingsOpen(false)}>{t.close}</button>
         </div>
       </div>
     </div>

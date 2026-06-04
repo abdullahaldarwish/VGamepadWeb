@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Drawing.Drawing2D;
 using VGamepadWeb.Core;
 
@@ -33,6 +34,7 @@ namespace VGamepadWeb.WinForm
             server.OnPlayerDisconnected += HandlePlayerDisconnected;
 
             label_ips.Text = "Local IPs: " + string.Join(", ", NetworkHelper.GetAllLocalIPv4Addresses());
+            labelVersion.Text = $"Version: {Application.ProductVersion.Split("+")[0]}";
         }
 
         public enum ServerState
@@ -222,6 +224,25 @@ namespace VGamepadWeb.WinForm
         private void textBox1_TextChanged(object sender, EventArgs e)
         {
             server.UpdateServerPassword(textBoxPassword.Text);
+        }
+
+        private void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            try
+            {
+                // تجهيز إعدادات تشغيل الرابط عبر متصفح النظام الافتراضي
+                ProcessStartInfo psi = new ProcessStartInfo
+                {
+                    FileName = "https://github.com/aboodedc/VGamepadWeb",
+                    UseShellExecute = true // ضرورية جداً في دوت نت الحديث لتجنب خطأ الـ Win32Exception
+                };
+
+                Process.Start(psi);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"تعذر فتح الرابط تلقائياً: {ex.Message}", "خطأ", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
     }
 }

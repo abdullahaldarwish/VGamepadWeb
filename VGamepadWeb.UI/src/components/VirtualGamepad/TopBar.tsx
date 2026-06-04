@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { GamepadLayout } from './types';
 import { BTN_IDS, STICK_IDS } from './constants';
+import { useLanguage } from './LanguageContext';
+import type { Language } from './i18n';
+import { AboutModal } from './AboutModal';
 
 interface TopBarProps {
   connStatus: 'off' | 'ing' | 'on';
@@ -27,18 +30,29 @@ interface TopBarProps {
   setShowHitboxes: (show: boolean) => void;
 }
 
+const LANGUAGE_OPTIONS: { value: Language; label: string; flag: string }[] = [
+  { value: 'ar', label: 'العربية', flag: '🇸🇦' },
+  { value: 'en', label: 'English', flag: '🇬🇧' },
+];
+
 export const TopBar: React.FC<TopBarProps> = ({
   connStatus, latency, controllerId, isBarHidden, setIsBarHidden, isFullscreen, toggleFullscreen,
   editMode, setEditMode, menuOpen, setMenuOpen, visibilityMenuOpen, setVisibilityMenuOpen,
   setSettingsOpen, resetLayout, exportLayout, fileRef, importLayout, layout, toggleVisibility,
   showHitboxes, setShowHitboxes
 }) => {
+  const { t, language, setLanguage } = useLanguage();
+  const [langMenuOpen, setLangMenuOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
+
+  const currentLang = LANGUAGE_OPTIONS.find(o => o.value === language);
+
   return (
     <>
       <div className={`gp-bar ${isBarHidden ? 'hidden' : ''}`}>
         <div className={`gp-dot ${connStatus}`} onClick={() => setSettingsOpen(true)} />
         <span className="gp-bar-status" onClick={() => setSettingsOpen(true)}>
-          {connStatus === 'on' ? 'متصل' : connStatus === 'ing' ? 'جاري...' : 'غير متصل'}
+          {connStatus === 'on' ? t.connected : connStatus === 'ing' ? t.connecting : t.disconnected}
         </span>
         {connStatus === 'on' && latency !== null && (
           <span className={`gp-latency ${latency < 20 ? 'good' : latency < 50 ? 'ok' : 'bad'}`}>
@@ -53,33 +67,33 @@ export const TopBar: React.FC<TopBarProps> = ({
         <div className="gp-spacer" />
         {isFullscreen && (
           <button className="gp-bar-btn" onClick={() => setIsBarHidden(true)}>
-            👁️ إخفاء
+            {t.hide}
           </button>
         )}
         <button
           className="gp-bar-btn"
           onClick={toggleFullscreen}
         >
-          {isFullscreen ? '🗗 تصغير' : '🗖 كاملة'}
+          {isFullscreen ? t.minimize : t.fullscreen}
         </button>
         <button
           className={`gp-bar-btn ${editMode ? 'done' : ''}`}
           onClick={() => setEditMode(!editMode)}
         >
-          {editMode ? '✓ تم' : '✏️ تعديل'}
+          {editMode ? t.done : t.edit}
         </button>
         {editMode && (
           <button
             className={`gp-bar-btn ${showHitboxes ? 'done' : ''}`}
             onClick={() => setShowHitboxes(!showHitboxes)}
           >
-            🔲 منطقة اللمس
+            {t.touchArea}
           </button>
         )}
         {editMode && (
           <div className="gp-menu-wrap">
-            <button className="gp-bar-btn" onClick={() => { setVisibilityMenuOpen(!visibilityMenuOpen); setMenuOpen(false); }}>
-              👁️ الأزرار
+            <button className="gp-bar-btn" onClick={() => { setVisibilityMenuOpen(!visibilityMenuOpen); setMenuOpen(false); setLangMenuOpen(false); }}>
+              {t.buttons}
             </button>
             {visibilityMenuOpen && (
               <div className="gp-dropdown" style={{ maxHeight: '60vh', overflowY: 'auto', minWidth: '150px' }}>
@@ -87,8 +101,8 @@ export const TopBar: React.FC<TopBarProps> = ({
                   const isHidden = layout.controls[id]?.hidden === true;
                   return (
                     <button key={id} onClick={() => toggleVisibility(id)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span>{id === 'LeftStick' ? 'عصا اليسار' : id === 'RightStick' ? 'عصا اليمين' : id}</span>
-                      <span>{isHidden ? '🚫' : '✅'}</span>
+                      <span>{id === 'LeftStick' ? t.leftStick : id === 'RightStick' ? t.rightStick : id}</span>
+                      <span className='promptfont'>{isHidden ? '\u{1F315}' : '\u{1F311}'}</span>
                     </button>
                   );
                 })}
@@ -96,14 +110,43 @@ export const TopBar: React.FC<TopBarProps> = ({
             )}
           </div>
         )}
+
+        {/* Language Menu */}
         <div className="gp-menu-wrap">
-          <button className="gp-bar-btn" onClick={() => { setMenuOpen(!menuOpen); setVisibilityMenuOpen(false); }}>☰</button>
+          <button
+            className="gp-bar-btn"
+            onClick={() => { setLangMenuOpen(!langMenuOpen); setMenuOpen(false); setVisibilityMenuOpen(false); }}
+            title={t.language}
+          >
+            {currentLang?.flag} {currentLang?.label}
+          </button>
+          {langMenuOpen && (
+            <div className="gp-dropdown gp-lang-dropdown">
+              {LANGUAGE_OPTIONS.map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => { setLanguage(opt.value); setLangMenuOpen(false); }}
+                  className={language === opt.value ? 'gp-lang-active' : ''}
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                >
+                  <span>{opt.flag}</span>
+                  <span>{opt.label}</span>
+                  {language === opt.value && <span style={{ marginInlineStart: 'auto' }}>✓</span>}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="gp-menu-wrap">
+          <button className="gp-bar-btn" onClick={() => { setMenuOpen(!menuOpen); setVisibilityMenuOpen(false); setLangMenuOpen(false); }}>☰</button>
           {menuOpen && (
-            <div className="gp-dropdown">
-              <button onClick={resetLayout}>🔄 إعادة ضبط</button>
-              <button onClick={exportLayout}>📤 تصدير</button>
-              <button onClick={() => { fileRef.current?.click(); }}>📥 استيراد</button>
-              <button onClick={() => { setSettingsOpen(true); setMenuOpen(false); }}>⚙️ اتصال</button>
+            <div className="gp-dropdown promptfont">
+              <button onClick={resetLayout}>{t.reset}</button>
+              <button onClick={exportLayout}>{t.export}</button>
+              <button onClick={() => { fileRef.current?.click(); }}>{t.import}</button>
+              <button onClick={() => { setSettingsOpen(true); setMenuOpen(false); }}>{t.connection}</button>
+              <button onClick={() => { setAboutOpen(true); setMenuOpen(false); }}>{t.about}</button>
             </div>
           )}
         </div>
@@ -112,12 +155,13 @@ export const TopBar: React.FC<TopBarProps> = ({
 
       {isBarHidden && (
         <button 
-          className="gp-show-bar-btn"
+          className="promptfont gp-show-bar-btn"
           onClick={() => setIsBarHidden(false)}
         >
-          👁️
+          {"\u{1F441}"}
         </button>
       )}
+      <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
     </>
   );
 };

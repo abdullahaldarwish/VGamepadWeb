@@ -11,6 +11,10 @@
   font-display: block;
 }
 
+.promptfont {
+  font-family: 'PromptFont', sans-serif !important;
+}
+
 :root {
   --bg: #0a0a0f;
   --bar-bg: rgba(15, 15, 25, 0.92);
@@ -61,6 +65,7 @@ html, body {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+  flex-direction: row-reverse;
 }
 
 .gp-bar.hidden {
@@ -142,7 +147,8 @@ html, body {
 
 .gp-dropdown {
   position: absolute;
-  top: 36px; right: 0;
+  top: 36px;
+  inset-inline-start: 0;
   background: #14141f;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -158,12 +164,23 @@ html, body {
   color: var(--text);
   padding: 10px 14px;
   font-size: 13px;
-  text-align: right;
+  text-align: start;
   cursor: pointer;
   border-radius: 6px;
   transition: background 0.1s;
 }
 .gp-dropdown button:active { background: #1e1e30; }
+.gp-dropdown button:hover { background: rgba(255,255,255,0.05); }
+
+/* Language dropdown */
+.gp-lang-dropdown {
+  min-width: 140px;
+}
+
+.gp-lang-active {
+  background: rgba(59, 130, 246, 0.12) !important;
+  color: var(--blue) !important;
+}
 
 /* ═══════ Settings Modal ═══════ */
 .gp-overlay {
@@ -233,6 +250,184 @@ html, body {
 .gp-mbtn.green { background: var(--green); color: #000; border-color: var(--green); }
 .gp-mbtn.red   { background: var(--red);   color: #fff; border-color: var(--red); }
 .gp-mbtn:disabled { opacity: 0.5; cursor: default; }
+
+/* ═══════ About Modal ═══════ */
+.gp-about-modal {
+  position: relative;
+  background: linear-gradient(145deg, #111118, #0e0e1a);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 20px;
+  padding: 32px 24px 24px;
+  width: 100%; max-width: 340px;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.04);
+  overflow: hidden;
+  animation: about-pop-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: center;
+}
+
+@keyframes about-pop-in {
+  from { opacity: 0; transform: scale(0.88) translateY(16px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0);    }
+}
+
+/* Glow blob behind header */
+.gp-about-glow {
+  position: absolute;
+  top: -40px; left: 50%;
+  transform: translateX(-50%);
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(59,130,246,0.25) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.gp-about-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.gp-about-logo {
+  font-size: 44px;
+  line-height: 1;
+  filter: drop-shadow(0 0 16px rgba(59,130,246,0.6));
+  animation: about-float 3s ease-in-out infinite;
+}
+
+@keyframes about-float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-6px); }
+}
+
+.gp-about-title {
+  font-size: 22px; font-weight: 800;
+  background: linear-gradient(135deg, #60a5fa, #a78bfa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+}
+
+.gp-about-version {
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* Author card */
+.gp-about-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+
+.gp-about-made {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.gp-about-name {
+  font-size: 16px; font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.3px;
+}
+
+.gp-about-email {
+  font-size: 12px;
+  color: var(--blue);
+  text-decoration: none;
+  transition: opacity 0.15s;
+  font-family: monospace;
+}
+.gp-about-email:hover { opacity: 0.75; }
+
+/* Action buttons */
+.gp-about-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gp-about-btn {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 13px; font-weight: 700;
+  text-decoration: none;
+  text-align: center;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.gp-about-btn.star {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #000;
+  box-shadow: 0 4px 16px rgba(245,158,11,0.3);
+}
+.gp-about-btn.star:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(245,158,11,0.45);
+}
+.gp-about-btn.star:active { transform: scale(0.97); }
+
+.gp-about-btn.ghost {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text);
+}
+.gp-about-btn.ghost:hover {
+  background: rgba(255,255,255,0.09);
+  border-color: rgba(255,255,255,0.18);
+}
+.gp-about-btn.ghost:active { transform: scale(0.97); }
+
+.gp-about-btn.linkedin {
+  background: linear-gradient(135deg, #0a66c2, #0077b5);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(10,102,194,0.35);
+}
+.gp-about-btn.linkedin:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(10,102,194,0.5);
+}
+.gp-about-btn.linkedin:active { transform: scale(0.97); }
+
+/* MIT license text */
+.gp-about-mit {
+  margin-top: 14px;
+  font-size: 11px;
+  color: var(--text-dim);
+  opacity: 0.7;
+  letter-spacing: 0.2px;
+}
+
+/* Close button */
+.gp-about-close {
+  position: absolute;
+  top: 12px; inset-inline-end: 12px;
+  width: 28px; height: 28px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 50%;
+  color: var(--text-dim);
+  font-size: 12px; font-weight: 700;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.gp-about-close:hover {
+  background: rgba(255,255,255,0.12);
+  color: var(--text);
+}
 
 /* ═══════ Canvas ═══════ */
 .gp-canvas {

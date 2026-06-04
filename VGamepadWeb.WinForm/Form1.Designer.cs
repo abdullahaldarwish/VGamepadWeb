@@ -39,6 +39,10 @@
             groupBox1 = new GroupBox();
             flowLayoutPanelPlayers = new FlowLayoutPanel();
             groupBox2 = new GroupBox();
+            flowLayoutPanel3 = new FlowLayoutPanel();
+            labelVersion = new Label();
+            linkLabel1 = new LinkLabel();
+            label3 = new Label();
             flowLayoutPanel2 = new FlowLayoutPanel();
             label1 = new Label();
             textBoxPort = new TextBox();
@@ -50,6 +54,7 @@
             flowLayoutPanel1.SuspendLayout();
             groupBox1.SuspendLayout();
             groupBox2.SuspendLayout();
+            flowLayoutPanel3.SuspendLayout();
             flowLayoutPanel2.SuspendLayout();
             SuspendLayout();
             // 
@@ -57,7 +62,6 @@
             // 
             tableLayoutPanel1.ColumnCount = 1;
             tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle());
-            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 20F));
             tableLayoutPanel1.Controls.Add(groupBoxState, 0, 0);
             tableLayoutPanel1.Controls.Add(groupBox1, 0, 1);
             tableLayoutPanel1.Controls.Add(groupBox2, 0, 2);
@@ -65,14 +69,15 @@
             tableLayoutPanel1.Location = new Point(0, 0);
             tableLayoutPanel1.Name = "tableLayoutPanel1";
             tableLayoutPanel1.RowCount = 3;
-            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
-            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 60F));
-            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 20F));
-            tableLayoutPanel1.Size = new Size(800, 456);
+            tableLayoutPanel1.RowStyles.Add(new RowStyle());
+            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+            tableLayoutPanel1.RowStyles.Add(new RowStyle());
+            tableLayoutPanel1.Size = new Size(800, 394);
             tableLayoutPanel1.TabIndex = 0;
             // 
             // groupBoxState
             // 
+            groupBoxState.AutoSizeMode = AutoSizeMode.GrowAndShrink;
             groupBoxState.Controls.Add(flowLayoutPanel1);
             groupBoxState.Controls.Add(button_Server);
             groupBoxState.Dock = DockStyle.Fill;
@@ -91,7 +96,7 @@
             flowLayoutPanel1.Dock = DockStyle.Left;
             flowLayoutPanel1.Location = new Point(3, 23);
             flowLayoutPanel1.Name = "flowLayoutPanel1";
-            flowLayoutPanel1.Size = new Size(483, 59);
+            flowLayoutPanel1.Size = new Size(602, 59);
             flowLayoutPanel1.TabIndex = 0;
             flowLayoutPanel1.WrapContents = false;
             // 
@@ -122,7 +127,7 @@
             labelIP.ForeColor = Color.Black;
             labelIP.Location = new Point(192, 0);
             labelIP.Name = "labelIP";
-            labelIP.Size = new Size(291, 58);
+            labelIP.Size = new Size(410, 58);
             labelIP.TabIndex = 2;
             labelIP.Text = "[x.x.x.x:x]";
             labelIP.TextAlign = ContentAlignment.MiddleRight;
@@ -146,7 +151,7 @@
             groupBox1.Dock = DockStyle.Fill;
             groupBox1.Location = new Point(3, 94);
             groupBox1.Name = "groupBox1";
-            groupBox1.Size = new Size(794, 267);
+            groupBox1.Size = new Size(794, 191);
             groupBox1.TabIndex = 2;
             groupBox1.TabStop = false;
             groupBox1.Text = "PLAYERS";
@@ -158,21 +163,61 @@
             flowLayoutPanelPlayers.FlowDirection = FlowDirection.TopDown;
             flowLayoutPanelPlayers.Location = new Point(3, 23);
             flowLayoutPanelPlayers.Name = "flowLayoutPanelPlayers";
-            flowLayoutPanelPlayers.Size = new Size(788, 241);
+            flowLayoutPanelPlayers.Size = new Size(788, 165);
             flowLayoutPanelPlayers.TabIndex = 1;
             flowLayoutPanelPlayers.WrapContents = false;
             // 
             // groupBox2
             // 
+            groupBox2.Controls.Add(flowLayoutPanel3);
             groupBox2.Controls.Add(flowLayoutPanel2);
             groupBox2.Controls.Add(label_ips);
             groupBox2.Dock = DockStyle.Fill;
-            groupBox2.Location = new Point(3, 367);
+            groupBox2.Location = new Point(3, 291);
             groupBox2.Name = "groupBox2";
-            groupBox2.Size = new Size(794, 86);
+            groupBox2.Size = new Size(794, 100);
             groupBox2.TabIndex = 3;
             groupBox2.TabStop = false;
             groupBox2.Text = "SETTINGS";
+            // 
+            // flowLayoutPanel3
+            // 
+            flowLayoutPanel3.Controls.Add(labelVersion);
+            flowLayoutPanel3.Controls.Add(linkLabel1);
+            flowLayoutPanel3.Controls.Add(label3);
+            flowLayoutPanel3.Location = new Point(20, 82);
+            flowLayoutPanel3.Name = "flowLayoutPanel3";
+            flowLayoutPanel3.Size = new Size(725, 21);
+            flowLayoutPanel3.TabIndex = 5;
+            // 
+            // labelVersion
+            // 
+            labelVersion.AutoSize = true;
+            labelVersion.Location = new Point(3, 0);
+            labelVersion.Name = "labelVersion";
+            labelVersion.Size = new Size(60, 20);
+            labelVersion.TabIndex = 0;
+            labelVersion.Text = "Verison:";
+            // 
+            // linkLabel1
+            // 
+            linkLabel1.AutoSize = true;
+            linkLabel1.Location = new Point(69, 0);
+            linkLabel1.Name = "linkLabel1";
+            linkLabel1.Size = new Size(53, 20);
+            linkLabel1.TabIndex = 1;
+            linkLabel1.TabStop = true;
+            linkLabel1.Text = "Github";
+            linkLabel1.LinkClicked += linkLabel1_LinkClicked;
+            // 
+            // label3
+            // 
+            label3.AutoSize = true;
+            label3.Location = new Point(128, 0);
+            label3.Name = "label3";
+            label3.Size = new Size(213, 20);
+            label3.TabIndex = 6;
+            label3.Text = "Created With ❤️ By aboodedc";
             // 
             // flowLayoutPanel2
             // 
@@ -224,10 +269,10 @@
             // 
             // label_ips
             // 
-            label_ips.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            label_ips.Location = new Point(20, 59);
+            label_ips.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            label_ips.Location = new Point(23, 60);
             label_ips.Name = "label_ips";
-            label_ips.Size = new Size(765, 21);
+            label_ips.Size = new Size(740, 21);
             label_ips.TabIndex = 3;
             label_ips.Text = "Local IPs: ";
             // 
@@ -235,9 +280,10 @@
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(800, 456);
+            ClientSize = new Size(800, 394);
             Controls.Add(tableLayoutPanel1);
             Icon = (Icon)resources.GetObject("$this.Icon");
+            MinimumSize = new Size(818, 0);
             Name = "Form1";
             Text = "VGamepadWeb";
             tableLayoutPanel1.ResumeLayout(false);
@@ -245,6 +291,8 @@
             flowLayoutPanel1.ResumeLayout(false);
             groupBox1.ResumeLayout(false);
             groupBox2.ResumeLayout(false);
+            flowLayoutPanel3.ResumeLayout(false);
+            flowLayoutPanel3.PerformLayout();
             flowLayoutPanel2.ResumeLayout(false);
             flowLayoutPanel2.PerformLayout();
             ResumeLayout(false);
@@ -268,5 +316,9 @@
         private FlowLayoutPanel flowLayoutPanel2;
         private Label label2;
         private TextBox textBoxPassword;
+        private FlowLayoutPanel flowLayoutPanel3;
+        private Label labelVersion;
+        private LinkLabel linkLabel1;
+        private Label label3;
     }
 }
