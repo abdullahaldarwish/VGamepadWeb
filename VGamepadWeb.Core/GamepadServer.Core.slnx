@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="../hostGamePadServer/hostGamePadServer.csproj" />
+  <Project Path="GamepadServer.Core.csproj" />
+</Solution>

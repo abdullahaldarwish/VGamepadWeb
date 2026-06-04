@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="VGamepadWeb.Console/VGamepadWeb.Console.csproj" />
+  <Project Path="VGamepadWeb.Core/VGamepadWeb.Core.csproj" />
+  <Project Path="VGamepadWeb.WinForm/VGamepadWeb.WinForm.csproj" Id="ee79dca4-9ca0-48e2-8dd9-3cb3035cfc25" />
+</Solution>

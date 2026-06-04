@@ -1,0 +1,124 @@
+import React from 'react';
+import type { GamepadLayout, ThemeType } from './types';
+import { STICK_IDS, THEMES } from './constants';
+
+interface EditBarProps {
+  editMode: boolean;
+  selectedControl: string | null;
+  layout: GamepadLayout;
+  theme: ThemeType;
+  updateSize: (id: string, delta: number) => void;
+  setSize: (id: string, size: number) => void;
+  setShape: (id: string, round: boolean) => void;
+  nudgePos: (id: string, dx: number, dy: number) => void;
+  resetControl: (id: string) => void;
+  setSelectedControl: (id: string | null) => void;
+}
+
+export const EditBar: React.FC<EditBarProps> = ({
+  editMode, selectedControl, layout, theme, updateSize, setSize, setShape, nudgePos, resetControl, setSelectedControl
+}) => {
+  if (!editMode) return null;
+
+  const getSelectedSize = () => {
+    if (!selectedControl) return 0;
+    const ctrl = layout.controls[selectedControl];
+    const isStick = (STICK_IDS as readonly string[]).includes(selectedControl);
+    const defaultW = isStick ? 120 : (THEMES[theme][selectedControl]?.w ?? 56);
+    return ctrl?.w ?? defaultW;
+  };
+
+  const getSelectedRound = () => {
+    if (!selectedControl || !THEMES[theme][selectedControl]) return false;
+    const ctrl = layout.controls[selectedControl];
+    return ctrl?.round ?? THEMES[theme][selectedControl]?.round ?? true;
+  };
+
+  return (
+    <div className="gp-edit-bar">
+      {selectedControl ? (
+        <div className="gp-edit-panel">
+          <div className="gp-edit-header">
+            <span className="gp-edit-icon">
+              {(STICK_IDS as readonly string[]).includes(selectedControl) ? '🕹️' : '🔘'}
+            </span>
+            <span className="gp-edit-title">
+              {selectedControl === 'LeftStick' ? 'عصا التحكم اليسرى (LS)' : 
+               selectedControl === 'RightStick' ? 'عصا التحكم اليمنى (RS)' : 
+               `زر ${selectedControl}`}
+            </span>
+          </div>
+
+          <div className="gp-edit-body">
+            {/* Size Control Row */}
+            <div className="gp-edit-section">
+              <span className="gp-edit-label">الحجم</span>
+              <div className="gp-edit-slider-wrap">
+                <button className="gp-edit-btn-val" onClick={() => updateSize(selectedControl, -4)}>−</button>
+                <input 
+                  type="range" 
+                  min="24" 
+                  max="200" 
+                  value={getSelectedSize()} 
+                  onChange={(e) => setSize(selectedControl, parseInt(e.target.value, 10))} 
+                  className="gp-edit-slider"
+                />
+                <button className="gp-edit-btn-val" onClick={() => updateSize(selectedControl, 4)}>+</button>
+                <span className="gp-edit-value-badge">{getSelectedSize()}px</span>
+              </div>
+            </div>
+
+            {/* Shape Control Row (Only for buttons) */}
+            {THEMES[theme][selectedControl] && (
+              <div className="gp-edit-section">
+                <span className="gp-edit-label">الشكل</span>
+                <div className="gp-edit-segmented">
+                  <button 
+                    className={`gp-edit-seg-btn ${getSelectedRound() ? 'active' : ''}`}
+                    onClick={() => setShape(selectedControl, true)}
+                  >
+                    ● دائري
+                  </button>
+                  <button 
+                    className={`gp-edit-seg-btn ${!getSelectedRound() ? 'active' : ''}`}
+                    onClick={() => setShape(selectedControl, false)}
+                  >
+                    ■ مستطيل
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Fine Nudge Control Row */}
+            <div className="gp-edit-section">
+              <span className="gp-edit-label">الموقع</span>
+              <div className="gp-edit-nudge">
+                <button className="gp-nudge-btn up" onClick={() => nudgePos(selectedControl, 0, -1)}>▲</button>
+                <div className="gp-nudge-mid">
+                  <button className="gp-nudge-btn left" onClick={() => nudgePos(selectedControl, -1, 0)}>◀</button>
+                  <span className="gp-nudge-title">محاذاة</span>
+                  <button className="gp-nudge-btn right" onClick={() => nudgePos(selectedControl, 1, 0)}>▶</button>
+                </div>
+                <button className="gp-nudge-btn down" onClick={() => nudgePos(selectedControl, 0, 1)}>▼</button>
+              </div>
+            </div>
+          </div>
+
+          <div className="gp-edit-actions">
+            <button className="gp-edit-action reset" onClick={() => resetControl(selectedControl)}>
+              🔄 إعادة تعيين الزر
+            </button>
+            <button className="gp-edit-action close" onClick={() => setSelectedControl(null)}>
+              ✕ إغلاق
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="gp-edit-hint">
+          <span className="gp-edit-hint-pulse"></span>
+          <span className="gp-edit-hint-text">اختر أي زر بالضغط عليه لتغيير حجمه وشكله ومكانه بدقة</span>
+        </div>
+      )}
+    </div>
+  );
+};
