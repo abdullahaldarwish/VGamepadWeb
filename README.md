@@ -24,6 +24,8 @@ Built with **React 19** and **Vite 8**, written in **TypeScript**. The UI connec
 The interface is designed to be usable on a mobile screen with touch controls — things like analog sticks, buttons, triggers, and a D-pad.
 
 **Tech used:** React, Vite, TypeScript, SignalR, Lucide React
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/f3e60cdb-276a-44bc-8dca-aacb090c82b9" />
+<img width="1920" height="1080" alt="editLayout" src="https://github.com/user-attachments/assets/0cb06449-af10-4a9c-8d9b-f63a2ae3a883" />
 
 ---
 
