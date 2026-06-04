@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             tableLayoutPanel1 = new TableLayoutPanel();
             groupBoxState = new GroupBox();
             flowLayoutPanel1 = new FlowLayoutPanel();
@@ -236,8 +237,9 @@
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 456);
             Controls.Add(tableLayoutPanel1);
+            Icon = (Icon)resources.GetObject("$this.Icon");
             Name = "Form1";
-            Text = "Form1";
+            Text = "VGamepadWeb";
             tableLayoutPanel1.ResumeLayout(false);
             groupBoxState.ResumeLayout(false);
             flowLayoutPanel1.ResumeLayout(false);

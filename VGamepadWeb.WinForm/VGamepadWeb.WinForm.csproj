@@ -6,6 +6,7 @@
 		<Nullable>enable</Nullable>
 		<UseWindowsForms>true</UseWindowsForms>
 		<ImplicitUsings>enable</ImplicitUsings>
+		<ApplicationIcon>VGamepadIcon.ico</ApplicationIcon>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -16,6 +17,10 @@
 		<Content Include="wwwroot\**\*">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Content Include="VGamepadIcon.ico" />
 	</ItemGroup>
 
 	<ItemGroup>
