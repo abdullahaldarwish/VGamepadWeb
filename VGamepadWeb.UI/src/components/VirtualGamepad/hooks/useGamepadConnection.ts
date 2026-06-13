@@ -7,14 +7,17 @@ interface UseGamepadConnectionProps {
   controllerType: number;
   enableVib: boolean;
   sensitivity: number;
+  enableGyro?: boolean;
+  motionOrientation?: string;
 }
 
 export const useGamepadConnection = ({
-  serverUrl, serverPassword = '', controllerType, enableVib, sensitivity
+  serverUrl, serverPassword = '', controllerType, enableVib, sensitivity, enableGyro = true, motionOrientation = 'Horizontal'
 }: UseGamepadConnectionProps) => {
   const [connStatus, setConnStatus] = useState<'off' | 'ing' | 'on'>('off');
   const [latency, setLatency] = useState<number | null>(null);
   const [controllerId, setControllerId] = useState<number | null>(null);
+  const [dataChannel, setDataChannel] = useState<RTCDataChannel | null>(null);
 
   const connRef = useRef<signalR.HubConnection | null>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
@@ -31,6 +34,7 @@ export const useGamepadConnection = ({
   useEffect(() => { updateLiveSetting('ControllerType', controllerType.toString()); }, [controllerType, updateLiveSetting]);
   useEffect(() => { updateLiveSetting('EnableVib', enableVib.toString()); }, [enableVib, updateLiveSetting]);
   useEffect(() => { updateLiveSetting('Sensitivity', sensitivity.toString()); }, [sensitivity, updateLiveSetting]);
+  useEffect(() => { updateLiveSetting('GyroEnabled', enableGyro.toString()); }, [enableGyro, updateLiveSetting]);
 
   useEffect(() => {
     return () => {
@@ -49,6 +53,7 @@ export const useGamepadConnection = ({
     setConnStatus('ing');
     setLatency(null);
     setControllerId(null);
+    setDataChannel(null);
     authFailedRef.current = false;
 
     let url = serverUrl.trim().replace(/\/$/, '');
@@ -66,6 +71,7 @@ export const useGamepadConnection = ({
 
     const dc = pc.createDataChannel('gamepad', { ordered: false, maxRetransmits: 0 });
     dcRef.current = dc;
+    setDataChannel(dc);
 
     dc.onopen = () => {
       console.log('[WebRTC] Data Channel opened — ready to send gamepad data!');
@@ -81,6 +87,7 @@ export const useGamepadConnection = ({
       if (pingRef.current) { clearInterval(pingRef.current); pingRef.current = null; }
       setLatency(null);
       setControllerId(null);
+      setDataChannel(null);
       setConnStatus('off');
     };
     dc.onmessage = (event) => {
@@ -139,11 +146,12 @@ export const useGamepadConnection = ({
 
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
-      await c.invoke('SendOffer', offer.sdp, controllerType, enableVib, sensitivity, serverPassword);
+      await c.invoke('SendOffer', offer.sdp, controllerType, enableVib, sensitivity, serverPassword, enableGyro, motionOrientation);
     } catch (err) {
       console.error(err);
       pc.close(); pcRef.current = null;
       dc.close(); dcRef.current = null;
+      setDataChannel(null);
       setConnStatus('off');
       if (!authFailedRef.current) {
         alert('فشل الاتصال: ' + err);
@@ -155,6 +163,7 @@ export const useGamepadConnection = ({
     if (pingRef.current) { clearInterval(pingRef.current); pingRef.current = null; }
     setLatency(null);
     setControllerId(null);
+    setDataChannel(null);
     if (dcRef.current) { dcRef.current.close(); dcRef.current = null; }
     if (pcRef.current) { pcRef.current.close(); pcRef.current = null; }
     await connRef.current?.stop(); connRef.current = null;
@@ -175,5 +184,5 @@ export const useGamepadConnection = ({
     }
   }, []);
 
-  return { connStatus, latency, controllerId, connect, disconnect, sendButton, sendJoystick };
+  return { connStatus, latency, controllerId, dataChannel, connect, disconnect, sendButton, sendJoystick };
 };

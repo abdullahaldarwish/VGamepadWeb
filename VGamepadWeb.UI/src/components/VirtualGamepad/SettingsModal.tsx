@@ -18,6 +18,10 @@ interface SettingsModalProps {
   setEnableVib: (enable: boolean) => void;
   sensitivity: number;
   setSensitivity: (sens: number) => void;
+  enableGyro: boolean;
+  setEnableGyro: (enable: boolean) => void;
+  motionOrientation: string;
+  setMotionOrientation: (orient: string) => void;
   useSameServer?: boolean;
   setUseSameServer?: (val: boolean) => void;
   serverUrl: string;
@@ -32,6 +36,7 @@ interface SettingsModalProps {
 export const SettingsModal: React.FC<SettingsModalProps> = ({
   settingsOpen, setSettingsOpen, activeProfile, profiles, switchProfile, createNewProfile, deleteProfile,
   theme, setTheme, controllerType, setControllerType, enableVib, setEnableVib, sensitivity, setSensitivity,
+  enableGyro, setEnableGyro, motionOrientation, setMotionOrientation,
   useSameServer, setUseSameServer, serverUrl, setServerUrl, serverPassword, setServerPassword, connStatus, connect, disconnect
 }) => {
   const { t } = useLanguage();
@@ -100,6 +105,31 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           onChange={e => setSensitivity(parseInt(e.target.value, 10))}
           style={{ marginBottom: '16px' }}
         />
+
+        <label style={{ display: 'flex', alignItems: 'center', marginBottom: '16px', gap: '8px', cursor: 'pointer' }}>
+          <input 
+            type="checkbox" 
+            checked={enableGyro}
+            onChange={e => setEnableGyro(e.target.checked)}
+            style={{ width: '20px', height: '20px' }}
+          />
+          {t.enableGyro}
+        </label>
+
+        {enableGyro && (
+          <>
+            <label>{t.motionOrientationLabel}</label>
+            <select 
+              className="gp-input" 
+              value={motionOrientation}
+              onChange={e => setMotionOrientation(e.target.value)}
+              style={{ marginBottom: '16px' }}
+            >
+              <option value="Horizontal">{t.motionOrientationHorizontal}</option>
+              <option value="Vertical">{t.motionOrientationVertical}</option>
+            </select>
+          </>
+        )}
 
         <label style={{ display: 'flex', alignItems: 'center', marginBottom: '16px', gap: '8px', cursor: 'pointer' }}>
           <input 

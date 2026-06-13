@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.SignalR;
 
 namespace VGamepadWeb.Core
 {
@@ -23,12 +23,12 @@ namespace VGamepadWeb.Core
         }
 
         // تحديث مهم: التحقق من كلمة المرور الاستاتيكية المركزية قبل بدء اتصال الـ WebRTC
-        public async Task SendOffer(string sdpOffer, int controllerType, bool enableVib, int sensitivity, string clientPassword = "")
+        public async Task SendOffer(string sdpOffer, int controllerType, bool enableVib, int sensitivity, string clientPassword = "", bool enableGyro = true, string motionOrientation = "Horizontal")
         {
             // التحقق من تطابق كلمة المرور القادمة من الهاتف مع كلمة مرور السيرفر
             if (_serverPassword == "" || clientPassword == _serverPassword)
             {
-                await _rtcManager.StartConnectionAsync(Context.ConnectionId, sdpOffer, (TypeController)controllerType, enableVib, sensitivity);
+                await _rtcManager.StartConnectionAsync(Context.ConnectionId, sdpOffer, (TypeController)controllerType, enableVib, sensitivity, enableGyro, motionOrientation);
             }
             else
             {

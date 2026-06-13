@@ -1,4 +1,4 @@
-﻿using Nefarius.ViGEm.Client;
+using Nefarius.ViGEm.Client;
 using Nefarius.ViGEm.Client.Targets;
 using Nefarius.ViGEm.Client.Targets.DualShock4;
 using Nefarius.ViGEm.Client.Targets.Xbox360;
@@ -14,13 +14,15 @@ namespace VGamepadWeb.Core
 
     public class GamepadSettings
     {
-        public GamepadSettings(bool enableVibration, int joystickSensitivity, TypeController controllerType, IVirtualGamepad gamepad, int controllerIndex)
+        public GamepadSettings(bool enableVibration, int joystickSensitivity, TypeController controllerType, IVirtualGamepad gamepad, int controllerIndex, bool enableGyro = true, string motionOrientation = "Horizontal")
         {
             EnableVibration = enableVibration;
             JoystickSensitivity = joystickSensitivity;
             ControllerType = controllerType;
             Gamepad = gamepad;
             ControllerIndex = controllerIndex;
+            EnableGyro = enableGyro;
+            MotionOrientation = motionOrientation;
         }
 
         public bool EnableVibration { get; set; }
@@ -28,6 +30,8 @@ namespace VGamepadWeb.Core
         public TypeController ControllerType { get; set; }
         public IVirtualGamepad Gamepad { get; set; }
         public int ControllerIndex { get; set; }
+        public bool EnableGyro { get; set; }
+        public string MotionOrientation { get; set; }
     }
 
     public class GamepadManager : IDisposable
@@ -35,8 +39,8 @@ namespace VGamepadWeb.Core
         private ViGEmClient client;
         private readonly ConcurrentDictionary<string, GamepadSettings> _controllers = new();
 
-        // نظام ذكي لإدارة الأرقام المتاحة تبدأ برمجياً من 0 إلى 3 تطابقاً مع نظام الـ XInput والـ UI للمحاكيات
-        private readonly bool[] _availableIndexes = new bool[] { true, true, true, true };
+        // نظام ذكي لإدارة الأرقام المتاحة ديناميكياً من 0 إلى 255
+        private readonly HashSet<int> _usedIndexes = new();
         private readonly object _indexLock = new object();
 
         public event Action<string, byte, byte> OnVibrationReceived;
@@ -69,19 +73,19 @@ namespace VGamepadWeb.Core
             client = new ViGEmClient();
         }
 
-        public void ConnectNewGamepad(string connectionId, TypeController type = TypeController.Xbox360, bool enableVib = true, int sensitivity = 100)
+        public void ConnectNewGamepad(string connectionId, TypeController type = TypeController.Xbox360, bool enableVib = true, int sensitivity = 100, bool enableGyro = true, string motionOrientation = "Horizontal")
         {
             if (!_controllers.ContainsKey(connectionId))
             {
                 int assignedIndex = -1;
                 lock (_indexLock)
                 {
-                    for (int i = 0; i < _availableIndexes.Length; i++)
+                    for (int i = 0; i < 256; i++)
                     {
-                        if (_availableIndexes[i])
+                        if (!_usedIndexes.Contains(i))
                         {
-                            _availableIndexes[i] = false;
-                            assignedIndex = i; // حجز الرقم من 0 إلى 3 مباشرة
+                            _usedIndexes.Add(i);
+                            assignedIndex = i; // حجز الرقم ديناميكياً
                             break;
                         }
                     }
@@ -115,7 +119,7 @@ namespace VGamepadWeb.Core
                     gamepad = x360;
                 }
 
-                _controllers.TryAdd(connectionId, new GamepadSettings(enableVib, sensitivity, type, gamepad, assignedIndex));
+                _controllers.TryAdd(connectionId, new GamepadSettings(enableVib, sensitivity, type, gamepad, assignedIndex, enableGyro, motionOrientation));
 
                 OnControllerIdAssigned?.Invoke(connectionId, assignedIndex);
                 Console.WriteLine($"[Manager] Assigned Controller ID: {assignedIndex} to Player: {connectionId}");
@@ -130,11 +134,8 @@ namespace VGamepadWeb.Core
 
                 lock (_indexLock)
                 {
-                    if (settings.ControllerIndex >= 0 && settings.ControllerIndex < 4)
-                    {
-                        _availableIndexes[settings.ControllerIndex] = true;
-                        Console.WriteLine($"[Manager] Controller ID: ({settings.ControllerIndex}) is now FREE.");
-                    }
+                    _usedIndexes.Remove(settings.ControllerIndex);
+                    Console.WriteLine($"[Manager] Controller ID: ({settings.ControllerIndex}) is now FREE.");
                 }
             }
         }
@@ -252,7 +253,36 @@ namespace VGamepadWeb.Core
                 {
                     settings.JoystickSensitivity = int.Parse(value);
                 }
+                else if (settingName == "GyroEnabled")
+                {
+                    settings.EnableGyro = bool.Parse(value);
+                }
+                else if (settingName == "MotionOrientation")
+                {
+                    settings.MotionOrientation = value;
+                }
             }
+        }
+
+        public bool IsGyroActiveForSlot(int slotIndex)
+        {
+            foreach (var controller in _controllers.Values)
+            {
+                if (controller.ControllerIndex == slotIndex)
+                {
+                    return controller.EnableGyro;
+                }
+            }
+            return false;
+        }
+
+        public string GetMotionOrientation(string connectionId)
+        {
+            if (_controllers.TryGetValue(connectionId, out var settings))
+            {
+                return settings.MotionOrientation;
+            }
+            return "Horizontal";
         }
 
         public void Dispose()
