@@ -89,6 +89,18 @@ namespace VGamepadWeb.Core
             {
                 _gamepadManager.OnJoystickMove(connectionId, parts[1], short.Parse(parts[2]), short.Parse(parts[3]));
             }
+            else if (parts[0] == "M" && parts.Length == 7) // Motion: M:ax:ay:az:gx:gy:gz
+            {
+                if (float.TryParse(parts[1], out var ax) &&
+                    float.TryParse(parts[2], out var ay) &&
+                    float.TryParse(parts[3], out var az) &&
+                    float.TryParse(parts[4], out var gx) &&
+                    float.TryParse(parts[5], out var gy) &&
+                    float.TryParse(parts[6], out var gz))
+                {
+                    _gamepadManager.OnMotionReceived(connectionId, ax, ay, az, gx, gy, gz);
+                }
+            }
         }
 
         public void EndConnection(string connectionId)

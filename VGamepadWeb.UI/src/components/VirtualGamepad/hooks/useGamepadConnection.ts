@@ -7,10 +7,11 @@ interface UseGamepadConnectionProps {
   controllerType: number;
   enableVib: boolean;
   sensitivity: number;
+  dsuPort?: number;
 }
 
 export const useGamepadConnection = ({
-  serverUrl, serverPassword = '', controllerType, enableVib, sensitivity
+  serverUrl, serverPassword = '', controllerType, enableVib, sensitivity, dsuPort = 26760
 }: UseGamepadConnectionProps) => {
   const [connStatus, setConnStatus] = useState<'off' | 'ing' | 'on'>('off');
   const [latency, setLatency] = useState<number | null>(null);
@@ -139,7 +140,7 @@ export const useGamepadConnection = ({
 
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
-      await c.invoke('SendOffer', offer.sdp, controllerType, enableVib, sensitivity, serverPassword);
+      await c.invoke('SendOffer', offer.sdp, controllerType, enableVib, sensitivity, serverPassword, dsuPort);
     } catch (err) {
       console.error(err);
       pc.close(); pcRef.current = null;
@@ -175,5 +176,12 @@ export const useGamepadConnection = ({
     }
   }, []);
 
-  return { connStatus, latency, controllerId, connect, disconnect, sendButton, sendJoystick };
+  const sendMotion = useCallback((ax: number, ay: number, az: number, gx: number, gy: number, gz: number) => {
+    const dc = dcRef.current;
+    if (dc?.readyState === 'open') {
+      dc.send(`M:${ax.toFixed(2)}:${ay.toFixed(2)}:${az.toFixed(2)}:${gx.toFixed(2)}:${gy.toFixed(2)}:${gz.toFixed(2)}`);
+    }
+  }, []);
+
+  return { connStatus, latency, controllerId, connect, disconnect, sendButton, sendJoystick, sendMotion };
 };

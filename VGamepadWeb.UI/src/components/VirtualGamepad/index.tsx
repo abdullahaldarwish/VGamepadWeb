@@ -8,6 +8,7 @@ import { TopBar } from './TopBar';
 import { SettingsModal } from './SettingsModal';
 import { EditBar } from './EditBar';
 import { useGamepadConnection } from './hooks/useGamepadConnection';
+import { useMotionSensor } from './hooks/useMotionSensor';
 import { LanguageProvider, useLanguage } from './LanguageContext';
 
 const VirtualGamepadInner: React.FC = () => {
@@ -37,6 +38,8 @@ const VirtualGamepadInner: React.FC = () => {
   const [controllerType, setControllerType] = useState<number>(() => parseInt(localStorage.getItem('gamepad_ctype') || '0', 10));
   const [enableVib, setEnableVib] = useState<boolean>(() => localStorage.getItem('gamepad_vib') !== 'false');
   const [sensitivity, setSensitivity] = useState<number>(() => parseInt(localStorage.getItem('gamepad_sens') || '100', 10));
+  const [motionEnabled, setMotionEnabled] = useState<boolean>(() => localStorage.getItem('gamepad_motion') === 'true');
+  const [dsuPort, setDsuPort] = useState<number>(() => parseInt(localStorage.getItem('gamepad_dsu_port') || '26760', 10));
   const [activeButtons, setActiveButtons] = useState<Set<string>>(new Set());
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isBarHidden, setIsBarHidden] = useState(false);
@@ -48,9 +51,10 @@ const VirtualGamepadInner: React.FC = () => {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const actualServerUrl = useSameServer ? window.location.origin : serverUrl;
-  const { connStatus, latency, controllerId, connect, disconnect, sendButton, sendJoystick } = useGamepadConnection({
-    serverUrl: actualServerUrl, serverPassword, controllerType, enableVib, sensitivity
+  const { connStatus, latency, controllerId, connect, disconnect, sendButton, sendJoystick, sendMotion } = useGamepadConnection({
+    serverUrl: actualServerUrl, serverPassword, controllerType, enableVib, sensitivity, dsuPort
   });
+  const { isSupported, needsPermission, requestPermission, isActive, start, stop, dataRef } = useMotionSensor();
 
   // Clear selection when exiting edit mode
   useEffect(() => { 
@@ -59,6 +63,43 @@ const VirtualGamepadInner: React.FC = () => {
       setVisibilityMenuOpen(false);
     }
   }, [editMode]);
+
+  const rafRef = useRef<number | null>(null);
+
+  // Start/stop motion sensor based on connection + motionEnabled
+  useEffect(() => {
+    if (connStatus === 'on' && motionEnabled) {
+      (async () => {
+        if (needsPermission) {
+          const ok = await requestPermission();
+          if (!ok) return;
+        }
+        start();
+      })();
+    } else {
+      stop();
+    }
+  }, [connStatus, motionEnabled]);
+
+  // RAF loop — send motion at max available rate
+  useEffect(() => {
+    if (connStatus !== 'on' || !motionEnabled || !isActive) return;
+
+    const sendLoop = () => {
+      if (connStatus !== 'on' || !motionEnabled) return;
+      const d = dataRef.current;
+      sendMotion(d.accel.x, d.accel.y, d.accel.z, d.gyro.x, d.gyro.y, d.gyro.z);
+      rafRef.current = requestAnimationFrame(sendLoop);
+    };
+
+    rafRef.current = requestAnimationFrame(sendLoop);
+    return () => {
+      if (rafRef.current != null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    };
+  }, [connStatus, motionEnabled, isActive, sendMotion]);
 
   // Fullscreen support
   useEffect(() => {
@@ -98,6 +139,8 @@ const VirtualGamepadInner: React.FC = () => {
   useEffect(() => { localStorage.setItem('gamepad_vib', enableVib.toString()); }, [enableVib]);
   useEffect(() => { localStorage.setItem('gamepad_sens', sensitivity.toString()); }, [sensitivity]);
   useEffect(() => { localStorage.setItem('gamepad_pass', serverPassword); }, [serverPassword]);
+  useEffect(() => { localStorage.setItem('gamepad_motion', motionEnabled.toString()); }, [motionEnabled]);
+  useEffect(() => { localStorage.setItem('gamepad_dsu_port', dsuPort.toString()); }, [dsuPort]);
 
   const switchProfile = useCallback((profileId: string) => {
     setActiveProfile(profileId);
@@ -240,6 +283,8 @@ const VirtualGamepadInner: React.FC = () => {
         useSameServer={useSameServer} setUseSameServer={setUseSameServer}
         serverUrl={serverUrl} setServerUrl={setServerUrl} serverPassword={serverPassword} setServerPassword={setServerPassword} 
         connStatus={connStatus} connect={connect} disconnect={disconnect}
+        motionEnabled={motionEnabled} setMotionEnabled={setMotionEnabled}
+        dsuPort={dsuPort} setDsuPort={setDsuPort}
       />
 
       {/* ─── Canvas ─── */}

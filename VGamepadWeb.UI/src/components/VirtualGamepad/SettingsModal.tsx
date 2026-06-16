@@ -27,12 +27,17 @@ interface SettingsModalProps {
   connStatus: 'off' | 'ing' | 'on';
   connect: () => void;
   disconnect: () => void;
+  motionEnabled: boolean;
+  setMotionEnabled: (val: boolean) => void;
+  dsuPort: number;
+  setDsuPort: (val: number) => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
   settingsOpen, setSettingsOpen, activeProfile, profiles, switchProfile, createNewProfile, deleteProfile,
   theme, setTheme, controllerType, setControllerType, enableVib, setEnableVib, sensitivity, setSensitivity,
-  useSameServer, setUseSameServer, serverUrl, setServerUrl, serverPassword, setServerPassword, connStatus, connect, disconnect
+  useSameServer, setUseSameServer, serverUrl, setServerUrl, serverPassword, setServerPassword, connStatus, connect, disconnect,
+  motionEnabled, setMotionEnabled, dsuPort, setDsuPort
 }) => {
   const { t } = useLanguage();
 
@@ -137,6 +142,32 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             />
           </>
         )}
+
+        <label style={{ display: 'flex', alignItems: 'center', marginBottom: '16px', gap: '8px', cursor: 'pointer' }}>
+          <input
+            type="checkbox"
+            checked={motionEnabled}
+            onChange={e => setMotionEnabled(e.target.checked)}
+            style={{ width: '20px', height: '20px' }}
+          />
+          {t.enableMotionControls}
+        </label>
+
+        {motionEnabled && (
+          <>
+            <label>{t.dsuPort}</label>
+            <input
+              className="gp-input"
+              type="number"
+              min={1024}
+              max={65535}
+              value={dsuPort}
+              onChange={e => setDsuPort(parseInt(e.target.value, 10) || 26760)}
+              style={{ marginBottom: '16px' }}
+            />
+          </>
+        )}
+
         <div className="gp-modal-btns">
           {connStatus === 'on' ? (
             <button className="gp-mbtn red" onClick={disconnect}>{t.disconnect}</button>
