@@ -1,7 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.AspNetCore.SignalR;
 
 namespace VGamepadWeb.Core
 {
@@ -15,6 +12,8 @@ namespace VGamepadWeb.Core
 
         public GamepadManager? GamepadManager => _app?.Services.GetRequiredService<GamepadManager>();
         public WebRTCSessionManager? WebRTCSessionManager => _app?.Services.GetRequiredService<WebRTCSessionManager>();
+        // إتاحة الوصول لكائن الحركة إذا احتجته في الـ WinForm مستقبلاً
+        public MotionServer? MotionServer => _app?.Services.GetRequiredService<MotionServer>();
 
         // 🔥 تم تحديث الدالة لتقبل البورت وكلمة المرور وتشغيل الـ React على نفس السيرفر
         public async Task StartServerAsync(int port = 5000, string password = "")
@@ -26,6 +25,7 @@ namespace VGamepadWeb.Core
 
             builder.Services.AddSignalR();
             builder.Services.AddSingleton<GamepadManager>();
+            builder.Services.AddSingleton<MotionServer>(); // سطر الإضافة الخاص بك ممتاز!
             builder.Services.AddSingleton<WebRTCSessionManager>();
             builder.Services.AddSingleton<CemuHookDSUServer>();
 
@@ -70,6 +70,10 @@ namespace VGamepadWeb.Core
             var gamepadManager = _app.Services.GetRequiredService<GamepadManager>();
             var dsuServer = _app.Services.GetRequiredService<CemuHookDSUServer>();
 
+            // 🔥 خطوة أمان أساسية: استدعاء كائن MotionServer صراحة من الحاوية لضمان تفعيل مَشيد الكلاس (Constructor)
+            // وبدء خادم الـ UDP بالاستماع فوراً عند إقلاع السيرفر.
+            var motionServer = _app.Services.GetRequiredService<MotionServer>();
+
             // ربط الأحداث داخلياً فور بناء الـ App بنجاح
             gamepadManager.OnControllerIdAssigned += (connId, id) =>
             {
@@ -113,6 +117,18 @@ namespace VGamepadWeb.Core
         {
             if (_app != null)
             {
+                // 🔥 خطوة أمان أساسية: تحرير المنفذ 26760 وإغلاق الـ UDP قبل تدمير السيرفر 
+                // لكي لا يحدث كراش عند إعادة التشغيل مرة أخرى من الـ WinForm
+                try
+                {
+                    var motionServer = _app.Services.GetService<MotionServer>();
+                    motionServer?.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[ServerRunner] Error disposing MotionServer: {ex.Message}");
+                }
+
                 await _app.StopAsync();
                 await _app.DisposeAsync();
                 _app = null;

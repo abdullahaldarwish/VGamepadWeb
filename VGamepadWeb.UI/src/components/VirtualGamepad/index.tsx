@@ -8,7 +8,7 @@ import { TopBar } from './TopBar';
 import { SettingsModal } from './SettingsModal';
 import { EditBar } from './EditBar';
 import { useGamepadConnection } from './hooks/useGamepadConnection';
-import { useMotionSensor } from './hooks/useMotionSensor';
+import { useMotionSensors } from './hooks/useMotionSensors';
 import { LanguageProvider, useLanguage } from './LanguageContext';
 
 const VirtualGamepadInner: React.FC = () => {
@@ -38,8 +38,8 @@ const VirtualGamepadInner: React.FC = () => {
   const [controllerType, setControllerType] = useState<number>(() => parseInt(localStorage.getItem('gamepad_ctype') || '0', 10));
   const [enableVib, setEnableVib] = useState<boolean>(() => localStorage.getItem('gamepad_vib') !== 'false');
   const [sensitivity, setSensitivity] = useState<number>(() => parseInt(localStorage.getItem('gamepad_sens') || '100', 10));
-  const [motionEnabled, setMotionEnabled] = useState<boolean>(() => localStorage.getItem('gamepad_motion') === 'true');
-  const [dsuPort, setDsuPort] = useState<number>(() => parseInt(localStorage.getItem('gamepad_dsu_port') || '26760', 10));
+  const [enableGyro, setEnableGyro] = useState<boolean>(() => localStorage.getItem('gamepad_gyro') !== 'false');
+  const [motionOrientation, setMotionOrientation] = useState<string>(() => localStorage.getItem('gamepad_orientation') || 'Horizontal');
   const [activeButtons, setActiveButtons] = useState<Set<string>>(new Set());
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isBarHidden, setIsBarHidden] = useState(false);
@@ -51,10 +51,17 @@ const VirtualGamepadInner: React.FC = () => {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const actualServerUrl = useSameServer ? window.location.origin : serverUrl;
-  const { connStatus, latency, controllerId, connect, disconnect, sendButton, sendJoystick, sendMotion } = useGamepadConnection({
-    serverUrl: actualServerUrl, serverPassword, controllerType, enableVib, sensitivity, dsuPort
+  const { connStatus, latency, controllerId, dataChannel, connect, disconnect, sendButton, sendJoystick } = useGamepadConnection({
+    serverUrl: actualServerUrl, serverPassword, controllerType, enableVib, sensitivity, enableGyro, motionOrientation
   });
   const { isSupported, needsPermission, requestPermission, isActive, start, stop, dataRef } = useMotionSensor();
+
+  const { requestPermission } = useMotionSensors(dataChannel);
+
+  const handleConnect = async () => {
+    await requestPermission();
+    await connect();
+  };
 
   // Clear selection when exiting edit mode
   useEffect(() => { 
@@ -138,9 +145,41 @@ const VirtualGamepadInner: React.FC = () => {
   useEffect(() => { localStorage.setItem('gamepad_ctype', controllerType.toString()); }, [controllerType]);
   useEffect(() => { localStorage.setItem('gamepad_vib', enableVib.toString()); }, [enableVib]);
   useEffect(() => { localStorage.setItem('gamepad_sens', sensitivity.toString()); }, [sensitivity]);
+  useEffect(() => { localStorage.setItem('gamepad_gyro', enableGyro.toString()); }, [enableGyro]);
+  useEffect(() => { localStorage.setItem('gamepad_orientation', motionOrientation); }, [motionOrientation]);
   useEffect(() => { localStorage.setItem('gamepad_pass', serverPassword); }, [serverPassword]);
   useEffect(() => { localStorage.setItem('gamepad_motion', motionEnabled.toString()); }, [motionEnabled]);
   useEffect(() => { localStorage.setItem('gamepad_dsu_port', dsuPort.toString()); }, [dsuPort]);
+
+  // Reconnect automatically when orientation or server URL changes while connected
+  const isFirstMountOrConnRef = useRef(true);
+  const prevOrientation = useRef(motionOrientation);
+  const prevServerUrl = useRef(actualServerUrl);
+
+  useEffect(() => {
+    if (isFirstMountOrConnRef.current) {
+      isFirstMountOrConnRef.current = false;
+      prevOrientation.current = motionOrientation;
+      prevServerUrl.current = actualServerUrl;
+      return;
+    }
+
+    const orientationChanged = prevOrientation.current !== motionOrientation;
+    const serverUrlChanged = prevServerUrl.current !== actualServerUrl;
+
+    if (orientationChanged || serverUrlChanged) {
+      prevOrientation.current = motionOrientation;
+      prevServerUrl.current = actualServerUrl;
+
+      if (connStatus === 'on') {
+        console.log('[Connection] Reconnecting due to settings change...');
+        (async () => {
+          await disconnect();
+          await handleConnect();
+        })();
+      }
+    }
+  }, [motionOrientation, actualServerUrl, connStatus, disconnect, handleConnect]);
 
   const switchProfile = useCallback((profileId: string) => {
     setActiveProfile(profileId);
@@ -280,11 +319,10 @@ const VirtualGamepadInner: React.FC = () => {
         profiles={profiles} switchProfile={switchProfile} createNewProfile={createNewProfile} deleteProfile={deleteProfile}
         theme={theme} setTheme={setTheme} controllerType={controllerType} setControllerType={setControllerType}
         enableVib={enableVib} setEnableVib={setEnableVib} sensitivity={sensitivity} setSensitivity={setSensitivity}
+        enableGyro={enableGyro} setEnableGyro={setEnableGyro} motionOrientation={motionOrientation} setMotionOrientation={setMotionOrientation}
         useSameServer={useSameServer} setUseSameServer={setUseSameServer}
         serverUrl={serverUrl} setServerUrl={setServerUrl} serverPassword={serverPassword} setServerPassword={setServerPassword} 
-        connStatus={connStatus} connect={connect} disconnect={disconnect}
-        motionEnabled={motionEnabled} setMotionEnabled={setMotionEnabled}
-        dsuPort={dsuPort} setDsuPort={setDsuPort}
+        connStatus={connStatus} connect={handleConnect} disconnect={disconnect}
       />
 
       {/* ─── Canvas ─── */}

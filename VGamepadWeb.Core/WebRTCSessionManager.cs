@@ -1,4 +1,4 @@
-﻿using SIPSorcery.Net;
+using SIPSorcery.Net;
 using System.Collections.Concurrent;
 using System.Text;
 
@@ -7,6 +7,7 @@ namespace VGamepadWeb.Core
     public class WebRTCSessionManager
     {
         private readonly GamepadManager _gamepadManager;
+        private readonly MotionServer _motionServer;
         private readonly ConcurrentDictionary<string, RTCPeerConnection> _peerConnections = new();
         private readonly ConcurrentDictionary<string, RTCDataChannel> _dataChannels = new();
 
@@ -14,9 +15,10 @@ namespace VGamepadWeb.Core
         public event Action<string, string> OnAnswerReady;
         public event Action<string> OnPlayerDisconnected; // حدث الـ WinForm
 
-        public WebRTCSessionManager(GamepadManager gamepadManager)
+        public WebRTCSessionManager(GamepadManager gamepadManager, MotionServer motionServer)
         {
             _gamepadManager = gamepadManager;
+            _motionServer = motionServer;
             _gamepadManager.OnVibrationReceived += HandleVibrationFromGame;
         }
 
@@ -29,7 +31,7 @@ namespace VGamepadWeb.Core
             }
         }
 
-        public async Task StartConnectionAsync(string connectionId, string sdpOffer, TypeController type, bool enableVib, int sensitivity)
+        public async Task StartConnectionAsync(string connectionId, string sdpOffer, TypeController type, bool enableVib, int sensitivity, bool enableGyro = true, string motionOrientation = "Horizontal")
         {
             var pc = new RTCPeerConnection();
             _peerConnections.TryAdd(connectionId, pc);
@@ -59,7 +61,7 @@ namespace VGamepadWeb.Core
             await pc.setLocalDescription(answer);
 
             OnAnswerReady?.Invoke(connectionId, answer.sdp);
-            _gamepadManager.ConnectNewGamepad(connectionId, type, enableVib, sensitivity);
+            _gamepadManager.ConnectNewGamepad(connectionId, type, enableVib, sensitivity, enableGyro, motionOrientation);
         }
 
         public void AddIceCandidate(string connectionId, string iceCandidateJson)
@@ -81,7 +83,7 @@ namespace VGamepadWeb.Core
                 return;
             }
 
-            if (parts[0] == "B") // الأزرار (بما فيها ضغطة الـ Touchpad كزر عادي)
+            if (parts[0] == "B") // الأزرار
             {
                 _gamepadManager.OnButtonReceive(connectionId, parts[1], parts[2] == "1");
             }
@@ -89,16 +91,56 @@ namespace VGamepadWeb.Core
             {
                 _gamepadManager.OnJoystickMove(connectionId, parts[1], short.Parse(parts[2]), short.Parse(parts[3]));
             }
-            else if (parts[0] == "M" && parts.Length == 7) // Motion: M:ax:ay:az:gx:gy:gz
+            else if (parts[0] == "M") // 🔥 الحركة (Gyro & Accel)
             {
-                if (float.TryParse(parts[1], out var ax) &&
-                    float.TryParse(parts[2], out var ay) &&
-                    float.TryParse(parts[3], out var az) &&
-                    float.TryParse(parts[4], out var gx) &&
-                    float.TryParse(parts[5], out var gy) &&
-                    float.TryParse(parts[6], out var gz))
+                int slot = _gamepadManager.GetControllerId(connectionId);
+                if (slot != -1 && parts.Length >= 7)
                 {
-                    _gamepadManager.OnMotionReceived(connectionId, ax, ay, az, gx, gy, gz);
+                    // استخدام InvariantCulture لتجنب أخطاء تحويل الفواصل العشرية (بين . و ,) باختلاف لغة النظام
+                    float web_alpha = float.Parse(parts[1], System.Globalization.CultureInfo.InvariantCulture); // yaw / Z
+                    float web_beta = float.Parse(parts[2], System.Globalization.CultureInfo.InvariantCulture);  // pitch / X
+                    float web_gamma = float.Parse(parts[3], System.Globalization.CultureInfo.InvariantCulture); // roll / Y
+                    float web_ax = float.Parse(parts[4], System.Globalization.CultureInfo.InvariantCulture);
+                    float web_ay = float.Parse(parts[5], System.Globalization.CultureInfo.InvariantCulture);
+                    float web_az = float.Parse(parts[6], System.Globalization.CultureInfo.InvariantCulture);
+
+                    string orientation = _gamepadManager.GetMotionOrientation(connectionId);
+
+                    float ax = 0f;
+                    float ay = 0f;
+                    float az = 0f;
+                    float gx = 0f;
+                    float gy = 0f;
+                    float gz = 0f;
+
+                    if (orientation == "Vertical") // Joy-Con / Portrait style
+                    {
+                        // DSU X = Web X, DSU Y = -Web Z, DSU Z = Web Y
+                        ax = web_ax / 9.80665f;
+                        ay = -web_az / 9.80665f;
+                        az = web_ay / 9.80665f;
+
+                        // Gyroscope axes mapping:
+                        // DSU Pitch = Web beta (gy), DSU Yaw = Web gamma (gz), DSU Roll = Web alpha (gx)
+                        gx = web_beta;
+                        gy = web_gamma;
+                        gz = web_alpha;
+                    }
+                    else // Horizontal / Landscape style (default)
+                    {
+                        // DSU X = Web Y, DSU Y = -Web X, DSU Z = Web Z
+                        ax = web_ay / 9.80665f;
+                        ay = -web_ax / 9.80665f;
+                        az = web_az / 9.80665f;
+
+                        // Gyroscope axes mapping:
+                        // DSU Pitch = Web gamma (gz), DSU Yaw = Web alpha (gx), DSU Roll = Web beta (gy)
+                        gx = web_gamma;
+                        gy = web_alpha;
+                        gz = web_beta;
+                    }
+
+                    _motionServer.UpdateMotion(slot, gx, gy, gz, ax, ay, az);
                 }
             }
         }
